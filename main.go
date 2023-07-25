@@ -50,9 +50,20 @@ func main() {
 	bookInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			book := obj.(*unstructured.Unstructured)
-			title, _, _ := unstructured.NestedString(book.Object, "spec", "title")
-			author, _, _ := unstructured.NestedString(book.Object, "spec", "author")
-			fmt.Printf("New book object: Author: %s, Title: %s\n", author, title)
+
+			var intObj struct {
+				Spec struct {
+					Author string `json:"author,omitempty"`
+					Title  string `json:"title,omitempty"`
+				} `json:"spec,omitempty"`
+			}
+
+			err := runtime.DefaultUnstructuredConverter.FromUnstructured(book.Object, &intObj)
+			if err != nil {
+				panic(err)
+			}
+
+			fmt.Printf("New book object: Author: %s, Title: %s\n", intObj.Spec.Author, intObj.Spec.Title)
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			// Handle updates here
